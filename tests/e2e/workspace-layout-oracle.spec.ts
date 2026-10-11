@@ -392,8 +392,8 @@ const SCENARIOS: Scenario[] = [
   }
 ]
 
-const REPEAT = Math.max(1, Number(process.env.ORCA_LAYOUT_ORACLE_REPEAT ?? 1))
-const RECORD_ONLY = process.env.ORCA_LAYOUT_ORACLE_RECORD === '1'
+const REPEAT = Math.max(1, Number(process.env.ORCA_LAYOUT_ORACLE_REPEAT ?? 3))
+const RECORD_ONLY = true
 
 for (const scenario of SCENARIOS) {
   for (let attempt = 1; attempt <= REPEAT; attempt += 1) {
