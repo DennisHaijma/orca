@@ -118,6 +118,9 @@ export type KeybindingActionId =
   | 'terminal.splitRight'
   | 'terminal.splitDown'
   | 'terminal.switchInputSource'
+  | 'workspaceStrip.nextTab'
+  | 'workspaceStrip.previousTab'
+  | 'workspaceStrip.closeTab'
   | PluginKeybindingActionId
 
 export type KeybindingOverrides = Partial<Record<KeybindingActionId, string[]>>

@@ -498,6 +498,8 @@ export type GlobalSettings = NativeChatGlobalSettings & {
   experimentalEphemeralVms?: boolean
   /** Compact worktree cards: hide the metadata row when title and branch say the same thing. */
   compactWorktreeCards: boolean
+  /** Workspace tabs across the top of the workspace view, in addition to the sidebar. */
+  workspaceTabStrip?: boolean
   /** Legacy persisted key from the Experimental rollout; new writes use compactWorktreeCards. */
   experimentalCompactWorktreeCards?: boolean
   /** Active non-local runtime environment for client-routed RPC; null keeps local desktop behavior. */

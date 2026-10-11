@@ -96,5 +96,29 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     },
     // Why: macOS uses Shift+Space as an input-source shortcut; Orca otherwise rejects Shift-only bindings to avoid stealing typed text.
     allowShiftOnlyKeybindings: true
+  },
+  {
+    id: 'workspaceStrip.nextTab',
+    title: 'Next workspace tab',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'global', 'workspace', 'tab', 'strip', 'next'],
+    defaultBindings: platformBindings([])
+  },
+  {
+    id: 'workspaceStrip.previousTab',
+    title: 'Previous workspace tab',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'global', 'workspace', 'tab', 'strip', 'previous'],
+    defaultBindings: platformBindings([])
+  },
+  {
+    id: 'workspaceStrip.closeTab',
+    title: 'Close workspace tab',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'global', 'workspace', 'tab', 'strip', 'close'],
+    defaultBindings: platformBindings([])
   }
 ]
