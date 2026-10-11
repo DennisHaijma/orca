@@ -146,27 +146,31 @@ jobs:
           pnpm run build:keyboard-layout-macos
           pnpm run build:notification-status-macos
           pnpm run ensure:electron-runtime
-          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac zip --arm64 --publish never
+          # Why `dir`: the app is signed below, so it must be zipped after signing, not by electron-builder.
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac dir --arm64 --publish never
 
-      - name: Verify the packaged app
+      - name: Sign, package and verify the app
         id: package
         env:
           VERSION: ${{ steps.assemble.outputs.version }}
         run: |
           set -euo pipefail
-          zip="$(ls dist/*-arm64-mac.zip)"
-          ditto -x -k "$zip" "$RUNNER_TEMP/app"
-          app="$RUNNER_TEMP/app/Orca.app"
+          app="dist/mac-arm64/Orca.app"
           packaged="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")"
           if [ "$packaged" != "$VERSION" ]; then
             echo "::error::Packaged version is $packaged, expected $VERSION"
             exit 1
           fi
-          codesign -dv "$app" 2>&1 | grep -E 'Identifier|Signature|TeamIdentifier' || true
-          # Why: Apple Silicon refuses to launch an app whose signature does not verify.
+          # Why: without a Developer ID electron-builder skips signing, which leaves a signature that
+          # does not cover the bundle. Apple Silicon needs one that verifies, so sign ad-hoc.
+          codesign --force --deep --sign - "$app"
           codesign --verify --deep --strict "$app"
           asset="$RUNNER_TEMP/orca-fork-$VERSION-macos-arm64.zip"
-          cp "$zip" "$asset"
+          ditto -c -k --norsrc --noextattr --keepParent "$app" "$asset"
+          # Why unzip, not ditto: the consumer unpacks with plain unzip, and the signature must survive that.
+          unzip -q "$asset" -d "$RUNNER_TEMP/roundtrip"
+          codesign --verify --deep --strict "$RUNNER_TEMP/roundtrip/Orca.app"
+          codesign -dv "$RUNNER_TEMP/roundtrip/Orca.app" 2>&1 | grep -E 'Identifier|Signature|TeamIdentifier' || true
           {
             echo "asset=$asset"
             echo "sha256=$(shasum -a 256 "$asset" | cut -d' ' -f1)"
