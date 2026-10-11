@@ -184,7 +184,7 @@ test next to it.
 
 ### Connection points in existing files
 
-Six files, 53 added lines in total, nothing rewritten. This is the
+Seven files: 54 added lines and one changed line, nothing rewritten. This is the
 checklist for resolving a rebase conflict.
 
 | File | Added |
