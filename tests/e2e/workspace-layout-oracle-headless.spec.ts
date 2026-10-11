@@ -419,7 +419,7 @@ async function runHeadlessScenario(
     const target = (client: RuntimeClient) => ({
       client,
       feed,
-      readSavedPartitions: () => readSavedPartitions(host.userDataDir),
+      readSavedPartitions: async () => readSavedPartitions(host.userDataDir),
       worktreeIds: () => [worktreeId]
     })
     const oracle = new LayoutOracle(target(a), `headless-${kind}-${scenario.id}`)
