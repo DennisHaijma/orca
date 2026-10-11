@@ -3,11 +3,11 @@
 | | |
 |---|---|
 | Written | 2026-10-11T22:41:00+02:00 |
-| Last updated | 2026-10-11T23:15:46+02:00 |
+| Last updated | 2026-10-12T00:28:42+02:00 |
 | Branch | `feat/horizontal-workspace-tabs` |
 | Based on | `v1.4.224` |
 | Origin | Our own idea; no upstream issue or pull request found (searched 2026-10-11) |
-| Status | **Implementing.** Plan in [PLAN.md](./PLAN.md). Not in `fork/features.txt`, so fork builds do not include it |
+| Status | **Implemented, not yet in a fork build.** Unit tests, typecheck, Orca's code-quality gate and an end-to-end test in the real app pass on macOS. Not in `fork/features.txt` yet |
 
 ## Goal
 
@@ -184,51 +184,87 @@ test next to it.
 
 ### Connection points in existing files
 
-Five files, each with a few added lines and nothing rewritten. This list is
-the checklist for resolving a rebase conflict; exact lines are filled in as
-they are written.
+Six files, 53 added lines in total, nothing rewritten. This is the
+checklist for resolving a rebase conflict.
 
 | File | Added |
 |---|---|
-| `src/renderer/src/app-shell/AppWorkspaceShell.tsx` | Mounts the strip above the existing row when the setting is on |
-| `src/shared/global-settings-types.ts` | The `workspaceTabStrip` setting |
-| `src/shared/default-global-settings.ts` | Its default, `false` |
-| An Appearance settings section in `src/renderer/src/components/settings/` | The toggle |
-| A definitions file in `src/shared/keybindings/` | The three shortcut actions |
+| `src/renderer/src/app-shell/AppWorkspaceShell.tsx` | The import, and `{layout.workspaceChromeActive ? <WorkspaceStrip /> : null}` as the first child of the center column |
+| `src/shared/global-settings-types.ts` | `workspaceTabStrip?: boolean`, after `compactWorktreeCards` |
+| `src/shared/default-global-settings.ts` | `workspaceTabStrip: false`, after `compactWorktreeCards` |
+| `src/renderer/src/components/settings/AppearanceInterfaceSection.tsx` | The "Workspace Tab Strip" toggle, just before the advanced disclosure |
+| `src/shared/keybindings/types.ts` | The three action ids, before `PluginKeybindingActionId` |
+| `src/shared/keybindings/definitions-core-4.ts` | The three definitions, appended at the end |
+| `src/renderer/src/components/tab-group/TabGroupPanel.tsx` | `workspaceStripOn`, and `&& !workspaceStripOn` on the collapsed-sidebar spacer |
+
+The setting sits next to `compactWorktreeCards`, not next to
+`windowBackgroundBlur`, because `feat/macos-window-glass` adds its
+settings there and the two features must not conflict with each other.
 
 Not edited: anything under `components/sidebar/` or `components/tab-bar/`,
-and `assets/main.css`.
+and `assets/main.css`. Both folders are imported from, through
+`workspace-strip-orca-bindings.ts` only.
+
+### Differences from the design
+
+- **`TabGroupPanel.tsx` is a seventh connection point.** With the sidebar
+  closed, the existing tab row reserved space for the floating title bar
+  controls. Those now sit over the strip's row, so the reservation is
+  skipped while the strip is on. Without this the lower row had a gap.
+- **"An agent needs the user" comes from Orca's agent-status store**
+  (`hasPermission`), not from terminal-title guesses. A tab the user closed
+  does not reopen while the same agent is still waiting.
+- **The toggle is not in the settings search index.** It filters correctly
+  on the Appearance page; adding it to the global index would mean editing
+  `appearance-search.ts`.
+- **Interface text uses inline English fallbacks**; the translation
+  catalogs are not edited. Orca's localization check was not run.
+- **A tab is identified by workspace id alone.** If the same workspace id
+  exists on two hosts, the tab activates Orca's default for that id.
 
 ## Testing
 
-Tests are written first: a failing test for each behaviour, then the code
-that makes it pass.
-
-| Test file | What it proves |
+| Test | What it proves |
 |---|---|
-| `open-workspace-tabs.test.ts` | Opening adds at the right and never duplicates; closing the active tab picks the neighbour; the last tab cannot be closed; deleted workspaces are dropped; a workspace that needs the user gets a tab without becoming active; restoring skips workspaces that no longer exist |
-| `WorkspaceStripTab.test.tsx` | A tab renders its label and status dot; click switches workspace; middle-click and the close button close it |
-| `WorkspaceStrip.test.tsx` | One tab per open workspace; the active one is marked; the strip is absent when the setting is off |
-| Orca's existing keybinding tests | The three new actions cause no shortcut conflicts and are reported as unassigned |
+| `open-workspace-tabs.test.ts` | The tab-list rules: open, no duplicates, close, last tab stays, neighbor choice, cycling, deleted workspaces dropped, late-loading workspaces kept, only newly waiting agents open a tab, stored data parsed safely |
+| `open-workspace-tabs-storage.test.ts` | Saving and restoring; corrupt, missing or failing storage never throws |
+| `workspace-strip-store.test.ts` | The store starts from saved tabs, saves on change, and does not rewrite when nothing changed |
+| `workspace-strip-actions.test.ts` | Closing the active tab switches to its neighbor first; the last tab stays; next/previous cycling |
+| `workspace-strip-keybindings.test.ts` | The three shortcut actions exist and ship unassigned on every platform |
+| `WorkspaceStripTab.test.tsx` | A tab renders project, workspace name and status dot; the active tab is marked; no close button when it cannot close; nothing for an unknown workspace |
+| `WorkspaceStrip.test.tsx` | Nothing while the setting is off; one tab per open workspace; the only tab cannot be closed |
+| `tests/e2e/workspace-strip.spec.ts` | In the real app: off by default; appears as the top row above the existing tabs; a second workspace gets a tab; clicking switches; sidebar closed keeps tabs clear of the title bar controls and leaves no gap below; closing the active tab moves to its neighbor and keeps the workspace; the last tab has no close button |
 
-Orca's required checks before a change is called done: `pnpm tc`,
-`pnpm test <files>`, and `pnpm run check:code-quality:changed`.
+Run them with:
 
-Checked in the running app, using a background launch and screenshots
-through the developer protocol as Orca's rules require (never bringing a
-test window to the front): strip on and off, sidebar open and closed, many
-tabs, and Interface Glass on.
+```sh
+pnpm test src/renderer/src/components/workspace-strip
+pnpm exec playwright test tests/e2e/workspace-strip.spec.ts --config tests/playwright.config.ts --project electron-headless
+```
 
-Not covered: Windows and Linux can only be written to Orca's conventions
-here, not seen running.
+Set `ORCA_WORKSPACE_STRIP_SCREENSHOT_DIR` to also save screenshots of the
+two tab rows. They are clipped to those rows on purpose, so a screenshot
+never contains terminal output.
 
-On every upstream release the fork build type-checks and runs these tests.
+Passing on macOS as of the last update: the 45 unit tests, `pnpm tc`,
+`pnpm run check:code-quality:changed`, the end-to-end test, and Orca's
+existing layout, settings, tab-group and shortcut tests (1803 tests).
 
-## Before implementation can start
+Not yet checked:
 
-Orca needs Node 24 and pnpm 12.8.1. The machine this was designed on has
-Node 23.8 and no pnpm, so none of the checks can run there until both are
-installed.
+- The three shortcuts pressed in the running app (their matching is Orca's
+  own, tested; the wiring is not exercised end to end).
+- Many tabs overflowing the strip.
+- The strip together with Interface Glass, which lives on another branch.
+- The settings toggle clicked in the running app (the test enables the
+  setting directly).
+- Windows and Linux.
+- `pnpm lint` in full, including the localization catalog check.
+
+## Working on this branch
+
+Orca needs Node 24 and pnpm 12.8.1. Then `pnpm install`, and the commands
+under Testing.
 
 ## Related upstream work
 
