@@ -10,6 +10,7 @@ import { hasServeUpdateSupervisor } from '../serve-update-handoff'
 import { getLinuxPackageType } from '../linux-update-package-type'
 import { UpdaterNudge } from './updater-nudge'
 import type { UpdateInstallMode } from './updater-state'
+import { isForkBuildVersion } from './fork-build-version'
 
 /** Exposes updater state to runtime RPC callers without leaking internal mutators. */
 export abstract class UpdaterRemoteStatus extends UpdaterNudge {
@@ -18,7 +19,7 @@ export abstract class UpdaterRemoteStatus extends UpdaterNudge {
   }
 
   protected getRemoteServerUpdateSupport(): RemoteServerUpdateSupport {
-    if (!app.isPackaged || is.dev) {
+    if (!app.isPackaged || is.dev || isForkBuildVersion(app.getVersion())) {
       return {
         installMode: this.updateInstallMode,
         automatic: false,
