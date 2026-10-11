@@ -6,7 +6,8 @@ import {
   dropRemovedWorkspaceTabs,
   neighborAfterClose,
   openWorkspaceTab,
-  parseStoredWorkspaceTabs
+  parseStoredWorkspaceTabs,
+  workspacesNewlyNeedingUser
 } from './open-workspace-tabs'
 
 describe('openWorkspaceTab', () => {
@@ -112,5 +113,15 @@ describe('parseStoredWorkspaceTabs', () => {
     expect(parseStoredWorkspaceTabs(null)).toEqual([])
     expect(parseStoredWorkspaceTabs('not json')).toEqual([])
     expect(parseStoredWorkspaceTabs('{"a":1}')).toEqual([])
+  })
+})
+
+describe('workspacesNewlyNeedingUser', () => {
+  it('reports only workspaces that started needing the user', () => {
+    expect(workspacesNewlyNeedingUser(new Set(['a']), ['a', 'b'])).toEqual(['b'])
+  })
+
+  it('reports nothing when the set is unchanged or shrinks', () => {
+    expect(workspacesNewlyNeedingUser(new Set(['a', 'b']), ['a'])).toEqual([])
   })
 })

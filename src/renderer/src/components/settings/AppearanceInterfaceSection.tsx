@@ -195,6 +195,25 @@ export function AppearanceInterfaceSection({
         />
       </SearchableSetting>
 
+      <SearchableSetting
+        title={translate('auto.components.workspaceStrip.setting', 'Workspace Tab Strip')}
+        description={translate(
+          'auto.components.workspaceStrip.settingDescription',
+          'Show open workspaces as tabs across the top of the window, in addition to the sidebar.'
+        )}
+        keywords={['workspace', 'tabs', 'strip', 'horizontal', 'titlebar', 'switch']}
+      >
+        <SettingsSwitchRow
+          label={translate('auto.components.workspaceStrip.setting', 'Workspace Tab Strip')}
+          description={translate(
+            'auto.components.workspaceStrip.settingDescription',
+            'Show open workspaces as tabs across the top of the window, in addition to the sidebar.'
+          )}
+          checked={settings.workspaceTabStrip === true}
+          onChange={() => updateSettings({ workspaceTabStrip: settings.workspaceTabStrip !== true })}
+        />
+      </SearchableSetting>
+
       {showAdvanced ? (
         <AppearanceAdvancedDisclosure showTopBorder={false}>
           <div className="divide-y divide-border/40">

@@ -78,3 +78,11 @@ export function parseStoredWorkspaceTabs(raw: string | null): OpenWorkspaceTabs 
   const ids = parsed.filter((id): id is string => typeof id === 'string' && id.length > 0)
   return [...new Set(ids)]
 }
+
+/** Why only new ones: a tab the user closed must not reopen while the same agent is still waiting. */
+export function workspacesNewlyNeedingUser(
+  previous: ReadonlySet<string>,
+  current: readonly string[]
+): string[] {
+  return current.filter((id) => !previous.has(id))
+}
