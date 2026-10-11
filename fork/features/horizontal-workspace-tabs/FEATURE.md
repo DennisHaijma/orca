@@ -7,7 +7,7 @@
 | Branch | `feat/horizontal-workspace-tabs` |
 | Based on | `v1.4.224` |
 | Origin | Our own idea; no upstream issue or pull request found (searched 2026-10-11) |
-| Status | **Design approved, spec awaiting review.** No code yet. Not in `fork/features.txt`, so fork builds do not include it |
+| Status | **Implementing.** Plan in [PLAN.md](./PLAN.md). Not in `fork/features.txt`, so fork builds do not include it |
 
 ## Goal
 
@@ -86,9 +86,10 @@ Each was chosen by the user during the design session on 2026-10-11.
 
 ### Memory
 
-- The open tabs and their order are saved with Orca's other window state
-  and restored on restart. Tabs for workspaces that no longer exist are
-  dropped on load.
+- The open tabs and their order are saved and restored on restart.
+- A tab whose workspace is not known is hidden. It is removed only when its
+  workspace was seen and then disappeared, because remote workspaces can
+  load late and must not lose their tabs at startup.
 
 ### Glass
 
@@ -153,7 +154,6 @@ and within Orca's contribution rules.
 | Title bar row | `TitlebarMainStrip`, `TitlebarLeftControls`, mounted by `AppWorkspaceShell` in `src/renderer/src/app-shell/` |
 | Switch palette | keybinding action `worktree.palette` |
 | Shortcut definitions | `src/shared/keybindings/` |
-| Saved window state | `PersistedUIState` in `src/shared/persisted-ui-state-types.ts` |
 | Settings | `GlobalSettings` in `src/shared/global-settings-types.ts` |
 
 ### New files
@@ -173,8 +173,10 @@ test next to it.
 
 - Setting: `workspaceTabStrip` (boolean, default `false`), with its toggle
   in Settings under Appearance.
-- Saved state: `openWorkspaceTabIds` (ordered list of workspace ids),
-  optional so older saved state loads unchanged.
+- Saved state: the ordered list of open workspace ids, in the browser's
+  local storage under `orca.workspaceStrip.openTabs`. Not in
+  `PersistedUIState`: that would mean editing six upstream files, and Orca
+  already keeps small interface preferences in local storage.
 - Shortcut actions: `workspaceStrip.nextTab`, `workspaceStrip.previousTab`,
   `workspaceStrip.closeTab`, all with no default keys.
 - "An agent needs the user" means the workspace status is `permission`,
@@ -182,7 +184,7 @@ test next to it.
 
 ### Connection points in existing files
 
-Six files, each with a few added lines and nothing rewritten. This list is
+Five files, each with a few added lines and nothing rewritten. This list is
 the checklist for resolving a rebase conflict; exact lines are filled in as
 they are written.
 
@@ -192,7 +194,6 @@ they are written.
 | `src/shared/global-settings-types.ts` | The `workspaceTabStrip` setting |
 | `src/shared/default-global-settings.ts` | Its default, `false` |
 | An Appearance settings section in `src/renderer/src/components/settings/` | The toggle |
-| `src/shared/persisted-ui-state-types.ts` | The `openWorkspaceTabIds` field |
 | A definitions file in `src/shared/keybindings/` | The three shortcut actions |
 
 Not edited: anything under `components/sidebar/` or `components/tab-bar/`,
