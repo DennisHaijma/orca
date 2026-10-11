@@ -75,7 +75,10 @@ jobs:
               git diff --name-only --diff-filter=U
               exit 1
             fi
-            echo "- \`$branch\` at \`$sha\`" >> "$notes"
+            # Why: most features here are someone else's work carried ahead of upstream; every release says whose.
+            authors="$(git shortlog -sn --no-merges "$TAG..origin/$branch" |
+              awk '{ n = $1; $1 = ""; sub(/^ /, ""); printf "%s%s (%s)", sep, $0, n; sep = ", " }')"
+            echo "- \`$branch\` at \`$sha\`, commits by $authors" >> "$notes"
             echo "Applied $branch ($sha)"
           done < "$RUNNER_TEMP/features.txt"
 
@@ -195,6 +198,9 @@ jobs:
             echo "Orca [$TAG](https://github.com/stablyai/orca/releases/tag/$TAG) plus these feature branches:"
             echo
             cat "$RUNNER_TEMP/features.md"
+            echo
+            echo "Each feature branch documents its origin and author in \`fork/features/<name>/FEATURE.md\`."
+            echo "Orca is the work of [stablyai](https://github.com/stablyai/orca) and its contributors, MIT licensed."
             echo
             echo "macOS arm64 only. Ad-hoc signed, not notarized. Self-update is disabled."
             echo

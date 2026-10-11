@@ -19,6 +19,21 @@ Branch names and commit messages follow
 The build applies the branches listed in [`fork/features.txt`](fork/features.txt),
 in order, on top of an upstream release tag.
 
+## Credits
+
+Orca is the work of [stablyai](https://github.com/stablyai/orca) and its
+contributors, and is MIT licensed. This fork adds nothing to that claim: it
+only carries features until upstream ships them.
+
+| Feature | Author | Source |
+|---|---|---|
+| `feat/macos-window-glass` | Paweł Kotowski ([@pawel-kotowski](https://github.com/pawel-kotowski)) | [stablyai/orca#24359](https://github.com/stablyai/orca/pull/24359) |
+| `feat/fork-build-no-self-update` | Written for this fork | — |
+
+Cherry-picked commits keep their original git author and name the commit
+they came from. Each release's notes list the commit authors per feature.
+When adding a feature from someone else's pull request, add a row here.
+
 ## Building
 
 ```sh
