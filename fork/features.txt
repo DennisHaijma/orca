@@ -1,0 +1,5 @@
+# Feature branches the fork build applies on top of an upstream release tag,
+# in this order. One branch per line; lines starting with # are ignored.
+# Each branch documents itself in fork/features/<name>/FEATURE.md.
+feat/macos-window-glass
+feat/fork-build-no-self-update

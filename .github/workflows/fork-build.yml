@@ -1,0 +1,207 @@
+name: Fork build
+
+run-name: Fork build on ${{ inputs.tag }}
+
+# Builds a macOS app from an upstream release tag plus the feature branches
+# listed in fork/features.txt, and publishes it as a release in this fork.
+#
+# Why this lives on its own history-free default branch: scheduled and manually
+# dispatched workflows run from the default branch only. Keeping upstream's
+# workflows off it means none of them ever run here, and `main` can stay an
+# untouched mirror of upstream.
+#
+# Run it with:
+#   gh workflow run fork-build.yml -f tag=v1.4.224
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Upstream release tag to build on, e.g. v1.4.224
+        required: true
+        type: string
+      publish:
+        description: Publish the build as a release in this fork
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fork-build
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_URL: https://github.com/stablyai/orca.git
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 120
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - name: Assemble the release tree
+        id: assemble
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' is not a stable release tag (expected vX.Y.Z)"
+            exit 1
+          fi
+
+          git clone --quiet --filter=blob:none --no-checkout "https://github.com/$GITHUB_REPOSITORY.git" .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Why from upstream: the fork only has the tags that existed when it was created.
+          git fetch --quiet --filter=blob:none --no-tags "$UPSTREAM_URL" "refs/tags/$TAG:refs/tags/$TAG"
+          git checkout --quiet -b release "$TAG"
+
+          notes="$RUNNER_TEMP/features.md"
+          : > "$notes"
+          # Why $GITHUB_SHA: the feature list must be the one this workflow run was dispatched from.
+          git show "$GITHUB_SHA:fork/features.txt" | sed -e 's/#.*//' -e 's/[[:space:]]*$//' | grep -v '^$' > "$RUNNER_TEMP/features.txt"
+          while read -r branch; do
+            sha="$(git rev-parse --verify --quiet "origin/$branch^{commit}")" || {
+              echo "::error::Feature branch '$branch' does not exist in this fork"
+              exit 1
+            }
+            if ! git merge --quiet --no-ff --no-edit "origin/$branch"; then
+              echo "::error::Feature branch '$branch' does not apply onto $TAG; rebase it onto that tag"
+              git diff --name-only --diff-filter=U
+              exit 1
+            fi
+            echo "- \`$branch\` at \`$sha\`" >> "$notes"
+            echo "Applied $branch ($sha)"
+          done < "$RUNNER_TEMP/features.txt"
+
+          last="$(git tag -l "$TAG-fork.*" | sed 's/.*-fork\.//' | sort -n | tail -1)"
+          version="${TAG#v}-fork.$(( ${last:-0} + 1 ))"
+          {
+            echo "version=$version"
+            echo "fork_tag=v$version"
+            echo "commit=$(git rev-parse --short=12 HEAD)"
+          } >> "$GITHUB_OUTPUT"
+          echo "Building $version"
+
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+          key: electron-builder-mac-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-builder-mac-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Run the tests the features add or change
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          tests="$(git diff --name-only --diff-filter=AM "$TAG" HEAD -- '*.test.ts' '*.test.tsx')"
+          if [ -z "$tests" ]; then
+            echo "No feature tests to run"
+            exit 0
+          fi
+          node config/scripts/ensure-native-runtime.mjs --runtime=node
+          echo "$tests" | xargs pnpm exec vitest run --config config/vitest.config.ts
+
+      # Why not `pnpm build:mac`: it always builds dmg and zip for both architectures and stamps its
+      # own -local version. These are the same steps with one target and the fork version.
+      - name: Build app
+        env:
+          ORCA_LOCAL_BUILD_VERSION: ${{ steps.assemble.outputs.version }}
+          ORCA_BUILD_COMMIT: ${{ steps.assemble.outputs.commit }}
+        run: |
+          set -euo pipefail
+          pnpm run build:desktop
+          pnpm run build:computer-macos
+          pnpm run build:keyboard-layout-macos
+          pnpm run build:notification-status-macos
+          pnpm run ensure:electron-runtime
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac zip --arm64 --publish never
+
+      - name: Verify the packaged app
+        id: package
+        env:
+          VERSION: ${{ steps.assemble.outputs.version }}
+        run: |
+          set -euo pipefail
+          zip="$(ls dist/*-arm64-mac.zip)"
+          ditto -x -k "$zip" "$RUNNER_TEMP/app"
+          app="$RUNNER_TEMP/app/Orca.app"
+          packaged="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")"
+          if [ "$packaged" != "$VERSION" ]; then
+            echo "::error::Packaged version is $packaged, expected $VERSION"
+            exit 1
+          fi
+          codesign -dv "$app" 2>&1 | grep -E 'Identifier|Signature|TeamIdentifier' || true
+          # Why: Apple Silicon refuses to launch an app whose signature does not verify.
+          codesign --verify --deep --strict "$app"
+          asset="$RUNNER_TEMP/orca-fork-$VERSION-macos-arm64.zip"
+          cp "$zip" "$asset"
+          {
+            echo "asset=$asset"
+            echo "sha256=$(shasum -a 256 "$asset" | cut -d' ' -f1)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v7
+        with:
+          name: orca-fork-${{ steps.assemble.outputs.version }}-macos-arm64
+          path: ${{ steps.package.outputs.asset }}
+          retention-days: 7
+          compression-level: 0
+
+      # Why the release tag points at this branch rather than the built tree: the built tree contains
+      # upstream's workflow files, which the workflow token is not allowed to push. The notes record
+      # the upstream tag and every feature commit, which is enough to rebuild the same tree.
+      - name: Publish the release
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          VERSION: ${{ steps.assemble.outputs.version }}
+          FORK_TAG: ${{ steps.assemble.outputs.fork_tag }}
+          ASSET: ${{ steps.package.outputs.asset }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Orca [$TAG](https://github.com/stablyai/orca/releases/tag/$TAG) plus these feature branches:"
+            echo
+            cat "$RUNNER_TEMP/features.md"
+            echo
+            echo "macOS arm64 only. Ad-hoc signed, not notarized. Self-update is disabled."
+            echo
+            echo "SHA-256: \`$SHA256\`"
+          } > "$RUNNER_TEMP/notes.md"
+          gh release create "$FORK_TAG" "$ASSET" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Orca $VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md"
