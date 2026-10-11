@@ -5,9 +5,20 @@
 | Written | 2026-10-11T22:41:20+02:00 |
 | Branch | `feat/macos-window-glass` |
 | Based on | `v1.4.224` |
-| Origin | [stablyai/orca#24359](https://github.com/stablyai/orca/pull/24359) by pawel-kotowski, head `3956c5fef3` (12 commits) |
+| Author | Paweł Kotowski ([@pawel-kotowski](https://github.com/pawel-kotowski)) |
+| Origin | [stablyai/orca#24359](https://github.com/stablyai/orca/pull/24359), head `3956c5fef3` (12 commits) |
 | Requested in | [#25068](https://github.com/stablyai/orca/issues/25068), [#8797](https://github.com/stablyai/orca/issues/8797) |
 | Status | Cherry-picked; not yet built or run. Upstream tested it on macOS 26 only, so macOS 15 is unverified |
+
+## Credit
+
+This feature is the work of **Paweł Kotowski**
+([@pawel-kotowski](https://github.com/pawel-kotowski)), taken unchanged from
+his pull request [stablyai/orca#24359](https://github.com/stablyai/orca/pull/24359)
+apart from the one conflict described below. Every commit on this branch
+keeps him as its git author and names the original commit it was
+cherry-picked from. This fork only carries the work until upstream merges
+it; it claims no authorship. Orca is MIT licensed.
 
 ## What it does
 
