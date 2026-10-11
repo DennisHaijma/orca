@@ -73,6 +73,9 @@ markup was kept and only the PR's `worktree-sidebar-panel` class was added.
 Every commit carries a `(cherry picked from commit …)` line naming its
 original.
 
+Commit messages are the author's own, except that `Co-Authored-By` trailers
+naming an AI assistant were removed, as on every commit in this fork.
+
 ## Keeping it current
 
 Rebase onto each new release tag:
