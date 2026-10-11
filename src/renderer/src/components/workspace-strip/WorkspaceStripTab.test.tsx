@@ -44,7 +44,8 @@ describe('WorkspaceStripTab', () => {
   it('shows the project and workspace name with the status dot', () => {
     bindings.label = { project: 'nix-config', workspace: 'glass' }
     const html = render()
-    expect(html).toContain('nix-config / glass')
+    expect(html).toMatch(/data-workspace-strip-project=""[^>]*>nix-config \/</)
+    expect(html).toMatch(/data-workspace-strip-name=""[^>]*>glass</)
     expect(html).toContain('data-status-dot="working"')
     expect(html).toContain('aria-selected="false"')
     expect(html).toContain('is-inactive')
@@ -59,8 +60,8 @@ describe('WorkspaceStripTab', () => {
   it('shows only the workspace name when the project is unknown', () => {
     bindings.label = { project: null, workspace: 'scratch' }
     const html = render()
-    expect(html).toContain('>scratch<')
-    expect(html).not.toContain(' / ')
+    expect(html).toMatch(/data-workspace-strip-name=""[^>]*>scratch</)
+    expect(html).not.toContain('data-workspace-strip-project')
   })
 
   it('has a close button only when the tab can be closed', () => {

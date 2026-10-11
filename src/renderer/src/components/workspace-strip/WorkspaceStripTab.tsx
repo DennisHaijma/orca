@@ -63,7 +63,18 @@ export function WorkspaceStripTab(props: {
               }}
             >
               <WorkspaceStatusDot status={status} showTooltip={false} />
-              <span className="min-w-0 flex-1 truncate">{text}</span>
+              {/* Why two spans: the project shortens first, so the workspace name stays readable. */}
+              {label.project ? (
+                <span
+                  data-workspace-strip-project=""
+                  className="min-w-0 shrink-[8] truncate text-muted-foreground"
+                >
+                  {`${label.project} /`}
+                </span>
+              ) : null}
+              <span data-workspace-strip-name="" className="min-w-0 shrink truncate">
+                {label.workspace}
+              </span>
               {canClose ? (
                 <button
                   type="button"

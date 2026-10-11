@@ -74,6 +74,8 @@ export default function TabGroupPanel({
 }): React.JSX.Element {
   const rightSidebarOpen = useAppStore((state) => state.rightSidebarOpen)
   const sidebarOpen = useAppStore((state) => state.sidebarOpen)
+  // Why: with the workspace tab strip on, the floating titlebar controls sit over the strip's row, not this one.
+  const workspaceStripOn = useAppStore((state) => state.settings?.workspaceTabStrip === true)
   const model = useTabGroupWorkspaceModel({ groupId, worktreeId })
   const {
     activeTab,
@@ -282,7 +284,7 @@ export default function TabGroupPanel({
         >
           <div className="flex h-full items-stretch pr-1.5">
             {/* Why: Electron drag hit-test respects no-drag only on DOM descendants, not z-index siblings, so this no-drag spacer keeps the collapsed left-sidebar's floating toggle clickable. */}
-            {reserveCollapsedSidebarHeaderSpace && !sidebarOpen ? (
+            {reserveCollapsedSidebarHeaderSpace && !sidebarOpen && !workspaceStripOn ? (
               <div
                 className="shrink-0"
                 style={
