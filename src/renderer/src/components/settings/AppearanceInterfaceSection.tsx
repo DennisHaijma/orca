@@ -210,9 +210,50 @@ export function AppearanceInterfaceSection({
             'Show open workspaces as tabs across the top of the window, in addition to the sidebar.'
           )}
           checked={settings.workspaceTabStrip === true}
-          onChange={() => updateSettings({ workspaceTabStrip: settings.workspaceTabStrip !== true })}
+          onChange={() =>
+            updateSettings({ workspaceTabStrip: settings.workspaceTabStrip !== true })
+          }
         />
       </SearchableSetting>
+
+      {settings.workspaceTabStrip === true ? (
+        <SearchableSetting
+          title={translate('auto.components.workspaceStrip.orderSetting', 'Workspace Tab Order')}
+          description={translate(
+            'auto.components.workspaceStrip.orderSettingDescription',
+            'Keep tabs of the same project together, or leave them in the order they were opened.'
+          )}
+          keywords={['workspace', 'tabs', 'strip', 'group', 'project', 'order', 'sort']}
+        >
+          <SettingsRow
+            label={translate('auto.components.workspaceStrip.orderSetting', 'Workspace Tab Order')}
+            description={translate(
+              'auto.components.workspaceStrip.orderSettingDescription',
+              'Keep tabs of the same project together, or leave them in the order they were opened.'
+            )}
+            control={
+              <SettingsSegmentedControl
+                ariaLabel={translate(
+                  'auto.components.workspaceStrip.orderSetting',
+                  'Workspace Tab Order'
+                )}
+                value={settings.workspaceTabStripOrder ?? 'project'}
+                onChange={(option) => updateSettings({ workspaceTabStripOrder: option })}
+                options={[
+                  {
+                    value: 'project',
+                    label: translate('auto.components.workspaceStrip.orderByProject', 'By project')
+                  },
+                  {
+                    value: 'opened',
+                    label: translate('auto.components.workspaceStrip.orderOpened', 'Order opened')
+                  }
+                ]}
+              />
+            }
+          />
+        </SearchableSetting>
+      ) : null}
 
       {showAdvanced ? (
         <AppearanceAdvancedDisclosure showTopBorder={false}>

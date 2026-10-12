@@ -1,17 +1,32 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { workspacesNewlyNeedingUser, type OpenWorkspaceTabs } from './open-workspace-tabs'
-import { closeStripTab, cycleStripTab, type WorkspaceStripActionDeps } from './workspace-strip-actions'
+import {
+  groupWorkspaceTabsByProject,
+  workspacesNewlyNeedingUser,
+  type OpenWorkspaceTabs,
+  type WorkspaceTabGroup
+} from './open-workspace-tabs'
+import {
+  closeStripTab,
+  cycleStripTab,
+  type WorkspaceStripActionDeps
+} from './workspace-strip-actions'
 import {
   activateWorkspace,
   useActiveWorkspaceId,
   useKnownWorkspaceTabs,
+  useProjectOrder,
+  useWorkspaceStripGroupsByProject,
+  useWorkspaceTabProjectIds,
   useWorkspaceIdsNeedingUser,
   useWorkspaceStripShortcuts
 } from './workspace-strip-orca-bindings'
 import { useWorkspaceStripStore, workspaceStripStore } from './workspace-strip-store'
 
 export type OpenWorkspaceTabsController = {
+  /** Tabs in the order they are shown, which is the order shortcuts and closing follow. */
   visibleTabs: OpenWorkspaceTabs
+  /** The same tabs split per project; a single group without a project when grouping is off. */
+  tabGroups: readonly WorkspaceTabGroup[]
   activeWorkspaceId: string | null
   activateTab: (workspaceId: string) => void
   closeTab: (workspaceId: string) => void
@@ -21,7 +36,18 @@ export type OpenWorkspaceTabsController = {
 /** Keeps the strip's tab list in step with Orca: the active workspace, agents needing the user, deletions. */
 export function useOpenWorkspaceTabs(): OpenWorkspaceTabsController {
   const tabs = useWorkspaceStripStore((s) => s.tabs)
-  const visibleTabs = useKnownWorkspaceTabs(tabs)
+  const knownTabs = useKnownWorkspaceTabs(tabs)
+  const groupsByProject = useWorkspaceStripGroupsByProject()
+  const projectIds = useWorkspaceTabProjectIds(knownTabs)
+  const projectOrder = useProjectOrder()
+  const tabGroups = useMemo<readonly WorkspaceTabGroup[]>(
+    () =>
+      groupsByProject
+        ? groupWorkspaceTabsByProject(knownTabs, projectIds, projectOrder)
+        : [{ projectId: null, tabs: knownTabs }],
+    [groupsByProject, knownTabs, projectIds, projectOrder]
+  )
+  const visibleTabs = useMemo(() => tabGroups.flatMap((group) => group.tabs), [tabGroups])
   const activeWorkspaceId = useActiveWorkspaceId()
   const needingUser = useWorkspaceIdsNeedingUser()
 
@@ -76,5 +102,12 @@ export function useOpenWorkspaceTabs(): OpenWorkspaceTabsController {
   )
   useWorkspaceStripShortcuts(shortcutHandlers)
 
-  return { visibleTabs, activeWorkspaceId, activateTab: activateWorkspace, closeTab, closeOtherTabs }
+  return {
+    visibleTabs,
+    tabGroups,
+    activeWorkspaceId,
+    activateTab: activateWorkspace,
+    closeTab,
+    closeOtherTabs
+  }
 }

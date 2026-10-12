@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { Bot, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import {
@@ -7,12 +7,13 @@ import {
   ContextMenuItem,
   ContextMenuTrigger
 } from '@/components/ui/context-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { preventMiddleButtonDefault } from '../tab-bar/middle-button-default-guard'
+import { workspaceAgentCountLabel, WorkspaceStripTabDetails } from './WorkspaceStripTabDetails'
 import {
+  useWorkspaceAgentCount,
   useWorkspaceStatus,
   useWorkspaceTabLabel,
-  workspaceStatusLabel,
   workspaceTabStateClasses,
   WorkspaceStatusDot
 } from './workspace-strip-orca-bindings'
@@ -21,31 +22,38 @@ export function WorkspaceStripTab(props: {
   workspaceId: string
   isActive: boolean
   canClose: boolean
+  /** False inside a project group, where the group label already names the project. */
+  showProject: boolean
   onActivate: (workspaceId: string) => void
   onClose: (workspaceId: string) => void
   onCloseOthers: (workspaceId: string) => void
 }): React.JSX.Element | null {
-  const { workspaceId, isActive, canClose, onActivate, onClose, onCloseOthers } = props
+  const { workspaceId, isActive, canClose, showProject, onActivate, onClose, onCloseOthers } = props
   const label = useWorkspaceTabLabel(workspaceId)
   const status = useWorkspaceStatus(workspaceId)
+  const agentCount = useWorkspaceAgentCount(workspaceId)
   if (!label) {
     return null
   }
-  const text = label.project ? `${label.project} / ${label.workspace}` : label.workspace
+  // Why: a project's main workspace carries the project's name, and "docs / docs" reads as a mistake.
+  const project = label.project === label.workspace ? null : label.project
+  const text = project ? `${project} / ${label.workspace}` : label.workspace
   const closeLabel = translate('auto.components.workspaceStrip.closeTab', 'Close workspace tab')
 
   return (
     <ContextMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
+      {/* Why a hover card and not a tooltip: like the sidebar card, the details list agents you can click. */}
+      <HoverCard openDelay={350} closeDelay={120}>
+        <HoverCardTrigger asChild>
           <ContextMenuTrigger asChild>
             <div
               role="tab"
               tabIndex={0}
               aria-selected={isActive}
+              aria-label={text}
               data-workspace-strip-tab={workspaceId}
               className={cn(
-                'group/strip-tab flex h-7 min-w-24 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-md px-2 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                'group/strip-tab flex h-7 min-w-16 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-md px-2 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring',
                 workspaceTabStateClasses(isActive)
               )}
               onClick={() => onActivate(workspaceId)}
@@ -64,17 +72,27 @@ export function WorkspaceStripTab(props: {
             >
               <WorkspaceStatusDot status={status} showTooltip={false} />
               {/* Why two spans: the project shortens first, so the workspace name stays readable. */}
-              {label.project ? (
+              {showProject && project ? (
                 <span
                   data-workspace-strip-project=""
                   className="min-w-0 shrink-[8] truncate text-muted-foreground"
                 >
-                  {`${label.project} /`}
+                  {`${project} /`}
                 </span>
               ) : null}
               <span data-workspace-strip-name="" className="min-w-0 shrink truncate">
                 {label.workspace}
               </span>
+              {agentCount > 0 ? (
+                <span
+                  data-workspace-strip-agents={agentCount}
+                  title={workspaceAgentCountLabel(agentCount)}
+                  className="flex shrink-0 items-center gap-0.5 text-[10px] tabular-nums text-muted-foreground"
+                >
+                  <Bot size={11} />
+                  {agentCount}
+                </span>
+              ) : null}
               {canClose ? (
                 <button
                   type="button"
@@ -91,11 +109,15 @@ export function WorkspaceStripTab(props: {
               ) : null}
             </div>
           </ContextMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" sideOffset={6}>
-          {text} · {workspaceStatusLabel(status)}
-        </TooltipContent>
-      </Tooltip>
+        </HoverCardTrigger>
+        <HoverCardContent side="bottom" align="start" sideOffset={6} variant="workspace-details">
+          <WorkspaceStripTabDetails
+            workspaceId={workspaceId}
+            label={label}
+            agentCount={agentCount}
+          />
+        </HoverCardContent>
+      </HoverCard>
       <ContextMenuContent>
         <ContextMenuItem disabled={!canClose} onSelect={() => onClose(workspaceId)}>
           {translate('auto.components.workspaceStrip.close', 'Close')}

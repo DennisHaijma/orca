@@ -500,6 +500,8 @@ export type GlobalSettings = NativeChatGlobalSettings & {
   compactWorktreeCards: boolean
   /** Workspace tabs across the top of the workspace view, in addition to the sidebar. */
   workspaceTabStrip?: boolean
+  /** How the workspace tab strip arranges its tabs; absent means grouped by project. */
+  workspaceTabStripOrder?: 'project' | 'opened'
   /** Legacy persisted key from the Experimental rollout; new writes use compactWorktreeCards. */
   experimentalCompactWorktreeCards?: boolean
   /** Active non-local runtime environment for client-routed RPC; null keeps local desktop behavior. */

@@ -51,16 +51,34 @@ test.describe('Workspace tab strip', () => {
     const stripBox = await strip.boundingBox()
     const tabRowBox = await orcaPage.locator('[data-tab-group-strip-id]').first().boundingBox()
     expect(stripBox?.y).toBe(0)
-    expect(tabRowBox?.y ?? 0).toBeGreaterThanOrEqual((stripBox?.y ?? 0) + (stripBox?.height ?? 0) - 1)
-
-    const otherWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
-      (id) => id !== firstWorktreeId
+    expect(tabRowBox?.y ?? 0).toBeGreaterThanOrEqual(
+      (stripBox?.y ?? 0) + (stripBox?.height ?? 0) - 1
     )
+
+    const otherWorktreeId = (await getAllWorktreeIds(orcaPage)).find((id) => id !== firstWorktreeId)
     test.skip(!otherWorktreeId, 'the seeded repo has a single workspace')
     await switchToWorktree(orcaPage, otherWorktreeId!)
 
     await expect(tabs).toHaveCount(2)
     await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true')
+    // Both workspaces belong to one project, so it is named once ahead of them, not on every tab.
+    const projectLabels = strip.locator('[data-workspace-strip-group]')
+    await expect(projectLabels).toHaveCount(1)
+    await orcaPage.evaluate(
+      () => void window.__store?.getState().updateSettings({ workspaceTabStripOrder: 'opened' })
+    )
+    await expect(projectLabels).toHaveCount(0)
+    await orcaPage.evaluate(
+      () => void window.__store?.getState().updateSettings({ workspaceTabStripOrder: 'project' })
+    )
+    await expect(projectLabels).toHaveCount(1)
+    // Hovering a tab shows the workspace's details, as hovering its sidebar card does.
+    await tabs.first().hover()
+    const details = orcaPage.locator('[data-workspace-strip-details]')
+    await expect(details).toBeVisible()
+    await expect(details).toContainText(/\d+ agents? · \d+ terminals?/)
+    await orcaPage.mouse.move(600, 400)
+    await expect(details).toHaveCount(0)
     await screenshotTabRows(orcaPage, 'strip-sidebar-open.png')
 
     // Clicking a tab switches workspace.

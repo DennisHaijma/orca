@@ -4,6 +4,7 @@ import {
   closeOtherWorkspaceTabs,
   closeWorkspaceTab,
   dropRemovedWorkspaceTabs,
+  groupWorkspaceTabsByProject,
   neighborAfterClose,
   openWorkspaceTab,
   parseStoredWorkspaceTabs,
@@ -123,5 +124,37 @@ describe('workspacesNewlyNeedingUser', () => {
 
   it('reports nothing when the set is unchanged or shrinks', () => {
     expect(workspacesNewlyNeedingUser(new Set(['a', 'b']), ['a'])).toEqual([])
+  })
+})
+
+describe('groupWorkspaceTabsByProject', () => {
+  it('puts tabs of one project together and keeps their open order', () => {
+    expect(
+      groupWorkspaceTabsByProject(['d1', 'x1', 'd2', 'd3'], ['d', 'x', 'd', 'd'], ['d', 'x'])
+    ).toEqual([
+      { projectId: 'd', tabs: ['d1', 'd2', 'd3'] },
+      { projectId: 'x', tabs: ['x1'] }
+    ])
+  })
+
+  it('orders the groups by the project order, not by which was opened first', () => {
+    const groups = groupWorkspaceTabsByProject(['x1', 'd1'], ['x', 'd'], ['d', 'x'])
+    expect(groups.map((group) => group.projectId)).toEqual(['d', 'x'])
+  })
+
+  it('puts tabs without a known project last, in one group', () => {
+    expect(groupWorkspaceTabsByProject(['u1', 'd1', 'u2'], [null, 'd', null], ['d'])).toEqual([
+      { projectId: 'd', tabs: ['d1'] },
+      { projectId: null, tabs: ['u1', 'u2'] }
+    ])
+  })
+
+  it('keeps projects missing from the order in the order they were opened', () => {
+    const groups = groupWorkspaceTabsByProject(['b1', 'a1', 'd1'], ['b', 'a', 'd'], ['d'])
+    expect(groups.map((group) => group.projectId)).toEqual(['d', 'b', 'a'])
+  })
+
+  it('returns no groups when there are no tabs', () => {
+    expect(groupWorkspaceTabsByProject([], [], ['d'])).toEqual([])
   })
 })

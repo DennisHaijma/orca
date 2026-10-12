@@ -255,6 +255,7 @@ export function buildDefaultSettings(args: {
     experimentalEphemeralVms: false,
     compactWorktreeCards: false,
     workspaceTabStrip: false,
+    workspaceTabStripOrder: 'project',
     // Why: local desktop stays the default until the user picks a saved runtime environment.
     activeRuntimeEnvironmentId: null,
     // Why: hydrate a stable empty shape so renderer optional-chained reads never hit undefined.

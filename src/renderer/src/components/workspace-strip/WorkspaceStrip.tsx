@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useOpenWorkspaceTabs } from './use-open-workspace-tabs'
 import {
   openWorkspaceSwitchPalette,
+  useProjectName,
   useRightSidebarOpen,
   useSidebarOpen,
   useWorkspaceStripEnabled
@@ -19,7 +20,7 @@ export function WorkspaceStrip(): React.JSX.Element | null {
 }
 
 function EnabledWorkspaceStrip(): React.JSX.Element {
-  const { visibleTabs, activeWorkspaceId, activateTab, closeTab, closeOtherTabs } =
+  const { visibleTabs, tabGroups, activeWorkspaceId, activateTab, closeTab, closeOtherTabs } =
     useOpenWorkspaceTabs()
   const sidebarOpen = useSidebarOpen()
   const rightSidebarOpen = useRightSidebarOpen()
@@ -51,16 +52,25 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
         ref={scrollerRef}
         className="scrollbar-none flex h-full min-w-0 items-center gap-1 overflow-x-auto px-1"
       >
-        {visibleTabs.map((workspaceId) => (
-          <WorkspaceStripTab
-            key={workspaceId}
-            workspaceId={workspaceId}
-            isActive={workspaceId === activeWorkspaceId}
-            canClose={canClose}
-            onActivate={activateTab}
-            onClose={closeTab}
-            onCloseOthers={closeOtherTabs}
-          />
+        {tabGroups.map((group, index) => (
+          <Fragment key={group.projectId ?? 'no-project'}>
+            {index > 0 ? (
+              <div data-workspace-strip-divider="" className="mx-1 h-4 w-px shrink-0 bg-border" />
+            ) : null}
+            <WorkspaceStripGroupLabel projectId={group.projectId} />
+            {group.tabs.map((workspaceId) => (
+              <WorkspaceStripTab
+                key={workspaceId}
+                workspaceId={workspaceId}
+                isActive={workspaceId === activeWorkspaceId}
+                canClose={canClose}
+                showProject={group.projectId === null}
+                onActivate={activateTab}
+                onClose={closeTab}
+                onCloseOthers={closeOtherTabs}
+              />
+            ))}
+          </Fragment>
         ))}
       </div>
       <Tooltip>
@@ -88,5 +98,22 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
         />
       )}
     </div>
+  )
+}
+
+/** Names a project once, ahead of its tabs; hidden from assistive tech because each tab already carries it. */
+function WorkspaceStripGroupLabel(props: { projectId: string | null }): React.JSX.Element | null {
+  const name = useProjectName(props.projectId)
+  if (!name) {
+    return null
+  }
+  return (
+    <span
+      aria-hidden="true"
+      data-workspace-strip-group={props.projectId ?? ''}
+      className="max-w-40 shrink-[4] truncate pl-1 text-xs font-medium text-muted-foreground"
+    >
+      {name}
+    </span>
   )
 }

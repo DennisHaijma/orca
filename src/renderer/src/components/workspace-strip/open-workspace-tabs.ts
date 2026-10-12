@@ -1,6 +1,38 @@
 /** Ordered workspace ids that have a tab in the strip, leftmost first. */
 export type OpenWorkspaceTabs = readonly string[]
 
+/** Tabs of one project, shown together; `projectId` is null for workspaces whose project is unknown. */
+export type WorkspaceTabGroup = { projectId: string | null; tabs: OpenWorkspaceTabs }
+
+/**
+ * Groups follow `projectOrder`, tabs inside a group keep their open order.
+ * Why a view and not the stored order: reordering projects must not rewrite what was saved.
+ */
+export function groupWorkspaceTabsByProject(
+  tabs: OpenWorkspaceTabs,
+  projectIds: readonly (string | null)[],
+  projectOrder: readonly string[]
+): WorkspaceTabGroup[] {
+  const byProject = new Map<string | null, string[]>()
+  tabs.forEach((workspaceId, index) => {
+    const projectId = projectIds[index] ?? null
+    const group = byProject.get(projectId)
+    if (group) {
+      group.push(workspaceId)
+    } else {
+      byProject.set(projectId, [workspaceId])
+    }
+  })
+  const rank = (projectId: string | null): number => {
+    const index = projectId === null ? -1 : projectOrder.indexOf(projectId)
+    return index === -1 ? projectOrder.length : index
+  }
+  // Why sort is enough: it is stable, so projects missing from the order keep their open order at the end.
+  return [...byProject.entries()]
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([projectId, groupTabs]) => ({ projectId, tabs: groupTabs }))
+}
+
 export function openWorkspaceTab(tabs: OpenWorkspaceTabs, workspaceId: string): OpenWorkspaceTabs {
   return tabs.includes(workspaceId) ? tabs : [...tabs, workspaceId]
 }

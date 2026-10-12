@@ -9,6 +9,8 @@ import { getWorktreeStatusLabel, type WorktreeStatus } from '@/lib/worktree-stat
 import { isFloatingWorkspaceId } from '../../../../shared/floating-workspace-worktree'
 import { keybindingMatchesAction } from '../../../../shared/keybindings'
 import StatusIndicator from '../sidebar/StatusIndicator'
+import WorktreeCardAgents from '../sidebar/WorktreeCardAgents'
+import { useWorktreeAgentRows } from '../sidebar/useWorktreeAgentRows'
 import { useWorktreeActivityStatus } from '../sidebar/use-worktree-activity-status'
 import { selectWorktreeAgentActivitySummary } from '../sidebar/worktree-agent-activity-summary'
 import { getTabRootStateClasses } from '../tab-bar/drop-indicator'
@@ -17,12 +19,36 @@ import type { OpenWorkspaceTabs } from './open-workspace-tabs'
 export type WorkspaceTabLabel = { project: string | null; workspace: string }
 
 export const WorkspaceStatusDot = StatusIndicator
+/** The sidebar's own agent list, so a tab's details show agents exactly as the sidebar card does. */
+export const WorkspaceAgentList: (props: { worktreeId: string }) => React.ReactNode =
+  WorktreeCardAgents
 export const useWorkspaceStatus: (workspaceId: string) => WorktreeStatus = useWorktreeActivityStatus
 export const workspaceStatusLabel: (status: WorktreeStatus) => string = getWorktreeStatusLabel
 export const workspaceTabStateClasses: (isActive: boolean) => string = getTabRootStateClasses
 
 export function useWorkspaceStripEnabled(): boolean {
   return useAppStore((s) => s.settings?.workspaceTabStrip === true)
+}
+
+/** Absent means grouped: profiles saved before the option existed get the default. */
+export function useWorkspaceStripGroupsByProject(): boolean {
+  return useAppStore((s) => s.settings?.workspaceTabStripOrder !== 'opened')
+}
+
+/** The project of each tab, in the same order as `tabs`; null where it is unknown. */
+export function useWorkspaceTabProjectIds(tabs: OpenWorkspaceTabs): readonly (string | null)[] {
+  return useAppStore(
+    useShallow((s) => tabs.map((id) => s.getKnownWorktreeById(id)?.repoId ?? null))
+  )
+}
+
+/** Why the store's project list: it is the order projects were added, without the sidebar's own sorting. */
+export function useProjectOrder(): readonly string[] {
+  return useAppStore(useShallow((s) => s.repos.map((repo) => repo.id)))
+}
+
+export function useProjectName(projectId: string | null): string | null {
+  return useAppStore((s) => s.repos.find((repo) => repo.id === projectId)?.displayName ?? null)
 }
 
 export function useSidebarOpen(): boolean {
@@ -56,6 +82,19 @@ export function useWorkspaceTabLabel(workspaceId: string): WorkspaceTabLabel | n
     () => (workspaceName === undefined ? null : { project: projectName, workspace: workspaceName }),
     [workspaceName, projectName]
   )
+}
+
+/** Agents the sidebar lists for this workspace: live ones plus finished ones not yet dismissed. */
+export function useWorkspaceAgentCount(workspaceId: string): number {
+  return useWorktreeAgentRows(workspaceId).length
+}
+
+export function useWorkspaceTerminalCount(workspaceId: string): number {
+  return useAppStore((s) => s.tabsByWorktree[workspaceId]?.length ?? 0)
+}
+
+export function useWorkspaceBranch(workspaceId: string): string | null {
+  return useAppStore((s) => s.getKnownWorktreeById(workspaceId)?.branch ?? null)
 }
 
 /** Workspaces with an agent waiting for permission or input, from Orca's agent-status store. */
