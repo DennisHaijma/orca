@@ -3,3 +3,4 @@
 # Each branch documents itself in fork/features/<name>/FEATURE.md.
 feat/macos-window-glass
 feat/fork-build-no-self-update
+feat/horizontal-workspace-tabs

@@ -29,6 +29,7 @@ only carries features until upstream ships them.
 |---|---|---|
 | `feat/macos-window-glass` | Paweł Kotowski ([@pawel-kotowski](https://github.com/pawel-kotowski)) | [stablyai/orca#24359](https://github.com/stablyai/orca/pull/24359) |
 | `feat/fork-build-no-self-update` | Written for this fork | — |
+| `feat/horizontal-workspace-tabs` | Written for this fork | — |
 
 Cherry-picked commits keep their original git author and name the commit
 they came from. Each release's notes list the commit authors per feature.
