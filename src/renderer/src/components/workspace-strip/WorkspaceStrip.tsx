@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef } from 'react'
-import { Plus } from 'lucide-react'
+import { Folder, Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useOpenWorkspaceTabs } from './use-open-workspace-tabs'
@@ -66,7 +66,7 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
       )}
       <div
         ref={scrollerRef}
-        className="scrollbar-none flex h-full min-w-0 items-center gap-1.5 overflow-x-auto px-1.5"
+        className="scrollbar-none flex h-full min-w-0 items-center gap-4 overflow-x-auto px-1.5"
       >
         {tabGroups.map((group) =>
           group.projectId === null ? (
@@ -106,7 +106,7 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
   )
 }
 
-/** One project: its name as a header across the full width of its tabs, which sit in a row beneath it. */
+/** One project the way the sidebar shows it: folder and name as a heading, its workspaces beneath. */
 function WorkspaceStripGroup(props: {
   projectId: string
   children: React.ReactNode
@@ -116,17 +116,18 @@ function WorkspaceStripGroup(props: {
     <div
       role="presentation"
       data-workspace-strip-group={props.projectId}
-      className="flex min-w-0 shrink flex-col overflow-hidden rounded-lg border border-border bg-foreground/[0.03]"
+      className="flex min-w-0 shrink flex-col gap-0.5"
     >
       {/* Why hidden from assistive tech: each tab's own name already includes the project. */}
       <div
         aria-hidden="true"
         data-workspace-strip-caption=""
-        className="flex h-4 items-center border-b border-border bg-foreground/[0.06] px-2 text-[10px] font-medium tracking-wider text-muted-foreground uppercase"
+        className="flex h-4 min-w-0 items-center gap-1.5 px-2 text-[11px] font-semibold text-foreground"
       >
+        <Folder size={11} className="shrink-0 text-muted-foreground" />
         <span className="min-w-0 truncate">{name}</span>
       </div>
-      <div className="flex min-w-0 items-center gap-0.5 p-0.5">{props.children}</div>
+      <div className="flex min-w-0 items-center gap-0.5">{props.children}</div>
     </div>
   )
 }

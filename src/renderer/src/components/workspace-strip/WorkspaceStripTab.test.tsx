@@ -54,13 +54,13 @@ describe('WorkspaceStripTab', () => {
     expect(html).toMatch(/data-workspace-strip-name=""[^>]*>glass</)
     expect(html).toContain('data-status-dot="working"')
     expect(html).toContain('aria-selected="false"')
-    expect(html).toContain('text-muted-foreground')
+    expect(html).toContain('worktree-sidebar-card-hover')
   })
 
   it('marks the active tab', () => {
     const html = render({ isActive: true })
     expect(html).toContain('aria-selected="true"')
-    expect(html).toContain('font-medium text-foreground')
+    expect(html).not.toContain('worktree-sidebar-card-hover')
   })
 
   it('shows only the workspace name when the project is unknown', () => {

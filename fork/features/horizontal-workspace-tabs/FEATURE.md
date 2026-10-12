@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Written | 2026-10-11T22:41:00+02:00 |
-| Last updated | 2026-10-12T22:00:42+02:00 |
+| Last updated | 2026-10-12T22:51:49+02:00 |
 | Branch | `feat/horizontal-workspace-tabs` |
 | Based on | `v1.4.224` |
 | Origin | Our own idea; no upstream issue or pull request found (searched 2026-10-11) |
@@ -46,8 +46,10 @@ Each was chosen by the user during the design session on 2026-10-11.
 - One tab per workspace (not per agent, not per project).
 - Label: the workspace name, shortened with an ellipsis. The project is
   named once, as a caption on its group (see "Order of the tabs").
-- Every tab is a visible pill: inactive ones faint, the active one
-  stronger and in medium weight.
+- A tab looks like the sidebar's workspace card: no fill until hovered,
+  and the active one gets the sidebar's selected-card border and fill.
+  It uses the sidebar's own colour tokens and hover class, so a theme
+  change reaches both.
 - The same status dot as the sidebar card, from the same source.
 - A small agent count next to the name when the workspace has agents.
 - Hovering a tab opens a details card: workspace, project and branch, the
@@ -108,11 +110,12 @@ order they were opened, workspaces of one project ended up scattered.
 
 - Setting "Workspace Tab Order", shown under the strip's toggle while the
   strip is on, with two choices:
-  - **By project** (default): the tabs of one project sit together
-    inside one outlined box. The project's name is a header across the
-    full width of the box, with the workspace tabs in a row beneath it,
-    so the row reads as projects first and workspaces second. The header
-    is always shown, also when a workspace has the project's name.
+  - **By project** (default): the tabs of one project sit together under
+    a heading that looks like the sidebar's project heading: a folder
+    icon and the project name in semibold. The workspace tabs sit in a
+    row beneath it, and projects are separated by space, not outlines.
+    The heading is always shown, also when a workspace has the project's
+    name.
     Projects follow the order they were added to Orca; tabs inside a
     project keep the order they were opened.
   - The header needs a second line, so the strip is 52px tall while
@@ -131,8 +134,10 @@ order they were opened, workspaces of one project ended up scattered.
   an extra tab and gave no hierarchy, so it was replaced by the outlined
   groups. The second version (`v1.4.224-fork.4`) put the caption beside
   the tabs and hid it when a tab had the same name; the user expected the
-  project above its workspaces, across their width, which is the current
-  design.
+  project above its workspaces, across their width. The third
+  (`v1.4.224-fork.5`) did that with an outlined box, an upper-case header
+  band and filled pills, which did not match the sidebar's look; the
+  current design copies the sidebar's.
 - The hover card is marked as not part of the window-drag area. It opens
   over the tab row below, which drags the window, and would otherwise
   lose the pointer and close when the pointer moves onto it.
@@ -287,7 +292,7 @@ and `assets/main.css`. Both folders are imported from, through
 | `workspace-strip-keybindings.test.ts` | The three shortcut actions exist and ship unassigned on every platform |
 | `WorkspaceStripTab.test.tsx` | A tab renders project, workspace name and status dot; the active tab is marked; no close button when it cannot close; nothing for an unknown workspace; no project inside a group; no repeated name; the agent count |
 | `WorkspaceStripTabDetails.test.tsx` | The hover card shows workspace, project, branch, status and the agent and terminal counts, and lists agents only when there are some |
-| `WorkspaceStrip.test.tsx` | Nothing while the setting is off; one tab per open workspace; the only tab cannot be closed; each project in its own outlined group with its name as a header; the strip is taller only when headers are shown; project left on the tabs when not grouped |
+| `WorkspaceStrip.test.tsx` | Nothing while the setting is off; one tab per open workspace; the only tab cannot be closed; each project as a group with its name as a heading above its tabs; the strip is taller only when headers are shown; project left on the tabs when not grouped |
 | `tests/e2e/workspace-strip.spec.ts` | In the real app: off by default; appears as the top row above the existing tabs; a second workspace gets a tab; clicking switches; sidebar closed keeps tabs clear of the title bar controls and leaves no gap below; closing the active tab moves to its neighbor and keeps the workspace; the last tab has no close button; the project is named once and the order setting switches grouping off and on; hovering a tab shows its details card; with one agent reported, the tab shows the count and the card lists the agent with its task |
 
 Run them with:

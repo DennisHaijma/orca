@@ -52,11 +52,11 @@ export function WorkspaceStripTab(props: {
               aria-label={text}
               data-workspace-strip-tab={workspaceId}
               className={cn(
-                'group/strip-tab flex h-6 min-w-16 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-md px-2 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                // Why not the tab row's classes: they paint inactive tabs in the row's own colour, leaving them shapeless here.
+                'group/strip-tab flex h-6 min-w-16 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-lg border px-2 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                // Why the sidebar's own tokens and hover class: a tab is the same workspace as a sidebar card and should look like one.
                 isActive
-                  ? 'bg-foreground/15 font-medium text-foreground'
-                  : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground'
+                  ? 'border-[color-mix(in_srgb,var(--worktree-sidebar-border)_40%,transparent)] bg-[color-mix(in_srgb,var(--worktree-sidebar-foreground)_8%,transparent)] dark:border-[color-mix(in_srgb,var(--worktree-sidebar-foreground)_18%,var(--worktree-sidebar-border))] dark:bg-[color-mix(in_srgb,var(--worktree-sidebar-foreground)_10%,transparent)]'
+                  : 'worktree-sidebar-card-hover border-transparent'
               )}
               onClick={() => onActivate(workspaceId)}
               onMouseDown={preventMiddleButtonDefault}
