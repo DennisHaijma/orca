@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { closeStripTab, cycleStripTab, type WorkspaceStripActionDeps } from './workspace-strip-actions'
+import {
+  closeStripTab,
+  cycleStripTab,
+  type WorkspaceStripActionDeps
+} from './workspace-strip-actions'
 
 function deps(overrides: Partial<WorkspaceStripActionDeps> = {}): WorkspaceStripActionDeps {
   return {

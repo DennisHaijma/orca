@@ -23,7 +23,10 @@ export function closeStripTab(deps: WorkspaceStripActionDeps, workspaceId: strin
   deps.close(workspaceId, deps.visibleTabs)
 }
 
-export function cycleStripTab(deps: WorkspaceStripActionDeps, direction: 'next' | 'previous'): void {
+export function cycleStripTab(
+  deps: WorkspaceStripActionDeps,
+  direction: 'next' | 'previous'
+): void {
   const target = adjacentWorkspaceTab(deps.visibleTabs, deps.activeWorkspaceId, direction)
   if (target !== null && target !== deps.activeWorkspaceId) {
     deps.activate(target)
