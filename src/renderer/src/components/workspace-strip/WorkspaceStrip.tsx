@@ -2,11 +2,10 @@ import { Fragment, useEffect, useRef } from 'react'
 import { Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import type { OpenWorkspaceTabs } from './open-workspace-tabs'
 import { useOpenWorkspaceTabs } from './use-open-workspace-tabs'
 import {
   openWorkspaceSwitchPalette,
-  useProjectCaption,
+  useProjectName,
   useRightSidebarOpen,
   useSidebarOpen,
   useWorkspaceStripEnabled
@@ -14,6 +13,7 @@ import {
 import { WorkspaceStripTab } from './WorkspaceStripTab'
 
 const NO_DRAG_REGION = { WebkitAppRegion: 'no-drag' } as const
+const GROUPED_STRIP_HEIGHT = { height: 52, minHeight: 52 } as const
 
 /** Optional row of workspace tabs above the workspace view; renders nothing unless the setting is on. */
 export function WorkspaceStrip(): React.JSX.Element | null {
@@ -39,6 +39,7 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
       onCloseOthers={closeOtherTabs}
     />
   )
+  const grouped = tabGroups.some((group) => group.projectId !== null)
   const addLabel = translate('auto.components.workspaceStrip.switchWorkspace', 'Switch workspace')
 
   useEffect(() => {
@@ -54,6 +55,8 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
   return (
     <div
       className="titlebar"
+      // Why inline: the project headers need a second line, and the shared titlebar class fixes the height.
+      style={grouped ? GROUPED_STRIP_HEIGHT : undefined}
       role="tablist"
       aria-label={translate('auto.components.workspaceStrip.label', 'Workspace tabs')}
     >
@@ -69,11 +72,7 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
           group.projectId === null ? (
             <Fragment key="no-project">{group.tabs.map((id) => renderTab(id, true))}</Fragment>
           ) : (
-            <WorkspaceStripGroup
-              key={group.projectId}
-              projectId={group.projectId}
-              tabs={group.tabs}
-            >
+            <WorkspaceStripGroup key={group.projectId} projectId={group.projectId}>
               {group.tabs.map((id) => renderTab(id, false))}
             </WorkspaceStripGroup>
           )
@@ -107,30 +106,27 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
   )
 }
 
-/** One project's tabs inside a shared outline, so the row reads as projects first and workspaces second. */
+/** One project: its name as a header across the full width of its tabs, which sit in a row beneath it. */
 function WorkspaceStripGroup(props: {
   projectId: string
-  tabs: OpenWorkspaceTabs
   children: React.ReactNode
 }): React.JSX.Element {
-  const caption = useProjectCaption(props.projectId, props.tabs)
+  const name = useProjectName(props.projectId)
   return (
     <div
       role="presentation"
       data-workspace-strip-group={props.projectId}
-      className="flex h-7 min-w-0 shrink items-center gap-0.5 rounded-lg border border-border bg-foreground/[0.03] px-0.5"
+      className="flex min-w-0 shrink flex-col overflow-hidden rounded-lg border border-border bg-foreground/[0.03]"
     >
       {/* Why hidden from assistive tech: each tab's own name already includes the project. */}
-      {caption ? (
-        <span
-          aria-hidden="true"
-          data-workspace-strip-caption=""
-          className="max-w-32 shrink-[4] truncate px-1.5 text-[10px] font-medium tracking-wider text-muted-foreground/70 uppercase"
-        >
-          {caption}
-        </span>
-      ) : null}
-      {props.children}
+      <div
+        aria-hidden="true"
+        data-workspace-strip-caption=""
+        className="flex h-4 items-center border-b border-border bg-foreground/[0.06] px-2 text-[10px] font-medium tracking-wider text-muted-foreground uppercase"
+      >
+        <span className="min-w-0 truncate">{name}</span>
+      </div>
+      <div className="flex min-w-0 items-center gap-0.5 p-0.5">{props.children}</div>
     </div>
   )
 }

@@ -112,7 +112,14 @@ export function WorkspaceStripTab(props: {
             </div>
           </ContextMenuTrigger>
         </HoverCardTrigger>
-        <HoverCardContent side="bottom" align="start" sideOffset={6} variant="workspace-details">
+        {/* Why no-drag: the card opens over the tab row below, a window-drag area that would swallow the pointer and close it. */}
+        <HoverCardContent
+          side="bottom"
+          align="start"
+          sideOffset={6}
+          variant="workspace-details"
+          className="[-webkit-app-region:no-drag]"
+        >
           <WorkspaceStripTabDetails
             workspaceId={workspaceId}
             label={label}

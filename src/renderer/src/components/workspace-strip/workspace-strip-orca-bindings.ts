@@ -45,18 +45,8 @@ export function useProjectOrder(): readonly string[] {
   return useAppStore(useShallow((s) => s.repos.map((repo) => repo.id)))
 }
 
-/**
- * The project's name as a caption for its group of tabs, or null when a tab already says it:
- * a project's main workspace carries the project's name, and showing both reads as a mistake.
- */
-export function useProjectCaption(
-  projectId: string | null,
-  tabs: OpenWorkspaceTabs
-): string | null {
-  return useAppStore((s) => {
-    const name = s.repos.find((repo) => repo.id === projectId)?.displayName ?? null
-    return tabs.some((id) => s.getKnownWorktreeById(id)?.displayName === name) ? null : name
-  })
+export function useProjectName(projectId: string): string | null {
+  return useAppStore((s) => s.repos.find((repo) => repo.id === projectId)?.displayName ?? null)
 }
 
 export function useSidebarOpen(): boolean {
