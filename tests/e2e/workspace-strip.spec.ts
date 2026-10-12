@@ -121,4 +121,52 @@ test.describe('Workspace tab strip', () => {
     await tabs.first().hover()
     await expect(tabs.first().getByRole('button', { name: 'Close workspace tab' })).toHaveCount(0)
   })
+
+  test("shows a workspace's agents on its tab and in its hover card", async ({ orcaPage }) => {
+    await waitForSessionReady(orcaPage)
+    const worktreeId = await waitForActiveWorktree(orcaPage)
+    await ensureTerminalVisible(orcaPage)
+
+    await orcaPage.evaluate((activeWorktreeId) => {
+      const store = window.__store
+      if (!store) {
+        throw new Error('window.__store is not available - was the app built with --mode e2e?')
+      }
+      const state = store.getState()
+      void state.updateSettings({ workspaceTabStrip: true })
+      const tab = state.tabsByWorktree[activeWorktreeId]?.[0]
+      const leafId = tab ? state.terminalLayoutsByTabId[tab.id]?.activeLeafId : null
+      if (!tab || !leafId) {
+        throw new Error('the active workspace has no terminal pane to attribute an agent to')
+      }
+      const now = Date.now()
+      // Why seeded: the test app runs no agent, and a hook report is how a real one reaches the store.
+      state.setAgentStatus(
+        `${tab.id}:${leafId}`,
+        { state: 'working', prompt: 'Rename the updater flag', agentType: 'claude' },
+        'claude',
+        { updatedAt: now, stateStartedAt: now - 120_000 }
+      )
+    }, worktreeId)
+
+    const tab = orcaPage.getByRole('tablist', { name: 'Workspace tabs' }).getByRole('tab').first()
+    await expect(tab.locator('[data-workspace-strip-agents="1"]')).toBeVisible()
+
+    await tab.hover()
+    const details = orcaPage.locator('[data-workspace-strip-details]')
+    await expect(details).toBeVisible()
+    await expect(details).toContainText('1 agent')
+    await expect(details).toContainText('Rename the updater flag')
+
+    if (SCREENSHOT_DIR) {
+      // Why hidden first: the card floats over the terminal, which can show a developer's shell output.
+      await orcaPage.addStyleTag({ content: '.xterm { visibility: hidden !important; }' })
+      const box = await details.boundingBox()
+      const width = await orcaPage.evaluate(() => window.innerWidth)
+      await orcaPage.screenshot({
+        path: path.join(SCREENSHOT_DIR, 'strip-hover-card.png'),
+        clip: { x: 0, y: 0, width, height: Math.ceil((box?.y ?? 0) + (box?.height ?? 0) + 12) }
+      })
+    }
+  })
 })

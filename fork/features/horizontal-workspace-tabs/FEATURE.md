@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Written | 2026-10-11T22:41:00+02:00 |
-| Last updated | 2026-10-12T21:25:28+02:00 |
+| Last updated | 2026-10-12T21:37:16+02:00 |
 | Branch | `feat/horizontal-workspace-tabs` |
 | Based on | `v1.4.224` |
 | Origin | Our own idea; no upstream issue or pull request found (searched 2026-10-11) |
@@ -277,7 +277,7 @@ and `assets/main.css`. Both folders are imported from, through
 | `WorkspaceStripTab.test.tsx` | A tab renders project, workspace name and status dot; the active tab is marked; no close button when it cannot close; nothing for an unknown workspace; no project inside a group; no repeated name; the agent count |
 | `WorkspaceStripTabDetails.test.tsx` | The hover card shows workspace, project, branch, status and the agent and terminal counts, and lists agents only when there are some |
 | `WorkspaceStrip.test.tsx` | Nothing while the setting is off; one tab per open workspace; the only tab cannot be closed; each project in its own outlined group with one caption; no caption when a tab carries the project name; project left on the tabs when not grouped |
-| `tests/e2e/workspace-strip.spec.ts` | In the real app: off by default; appears as the top row above the existing tabs; a second workspace gets a tab; clicking switches; sidebar closed keeps tabs clear of the title bar controls and leaves no gap below; closing the active tab moves to its neighbor and keeps the workspace; the last tab has no close button; the project is named once and the order setting switches grouping off and on; hovering a tab shows its details card |
+| `tests/e2e/workspace-strip.spec.ts` | In the real app: off by default; appears as the top row above the existing tabs; a second workspace gets a tab; clicking switches; sidebar closed keeps tabs clear of the title bar controls and leaves no gap below; closing the active tab moves to its neighbor and keeps the workspace; the last tab has no close button; the project is named once and the order setting switches grouping off and on; hovering a tab shows its details card; with one agent reported, the tab shows the count and the card lists the agent with its task |
 
 Run them with:
 
@@ -300,8 +300,10 @@ Not yet checked:
 - The three shortcuts pressed in the running app (their matching is Orca's
   own, tested; the wiring is not exercised end to end).
 - Many tabs overflowing the strip.
-- The hover card's agent list and the agent count with real agents
-  running; the test app has none, so only the empty case ran end to end.
+- The agent count and the hover card's agent list with a real agent
+  process. The end-to-end test seeds one agent report into Orca's store,
+  the way an agent's hook would, and checks the count on the tab and the
+  agent's row (task, agent name, time) in the card.
 - The "Workspace Tab Order" control clicked in the running app.
 - The outlined groups with several projects and in the dark theme; the
   test app has one project and runs in the light theme.
