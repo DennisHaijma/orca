@@ -13,7 +13,6 @@ import WorktreeCardAgents from '../sidebar/WorktreeCardAgents'
 import { useWorktreeAgentRows } from '../sidebar/useWorktreeAgentRows'
 import { useWorktreeActivityStatus } from '../sidebar/use-worktree-activity-status'
 import { selectWorktreeAgentActivitySummary } from '../sidebar/worktree-agent-activity-summary'
-import { getTabRootStateClasses } from '../tab-bar/drop-indicator'
 import type { OpenWorkspaceTabs } from './open-workspace-tabs'
 
 export type WorkspaceTabLabel = { project: string | null; workspace: string }
@@ -24,7 +23,6 @@ export const WorkspaceAgentList: (props: { worktreeId: string }) => React.ReactN
   WorktreeCardAgents
 export const useWorkspaceStatus: (workspaceId: string) => WorktreeStatus = useWorktreeActivityStatus
 export const workspaceStatusLabel: (status: WorktreeStatus) => string = getWorktreeStatusLabel
-export const workspaceTabStateClasses: (isActive: boolean) => string = getTabRootStateClasses
 
 export function useWorkspaceStripEnabled(): boolean {
   return useAppStore((s) => s.settings?.workspaceTabStrip === true)
@@ -47,8 +45,18 @@ export function useProjectOrder(): readonly string[] {
   return useAppStore(useShallow((s) => s.repos.map((repo) => repo.id)))
 }
 
-export function useProjectName(projectId: string | null): string | null {
-  return useAppStore((s) => s.repos.find((repo) => repo.id === projectId)?.displayName ?? null)
+/**
+ * The project's name as a caption for its group of tabs, or null when a tab already says it:
+ * a project's main workspace carries the project's name, and showing both reads as a mistake.
+ */
+export function useProjectCaption(
+  projectId: string | null,
+  tabs: OpenWorkspaceTabs
+): string | null {
+  return useAppStore((s) => {
+    const name = s.repos.find((repo) => repo.id === projectId)?.displayName ?? null
+    return tabs.some((id) => s.getKnownWorktreeById(id)?.displayName === name) ? null : name
+  })
 }
 
 export function useSidebarOpen(): boolean {

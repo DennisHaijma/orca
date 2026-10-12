@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Written | 2026-10-11T22:41:00+02:00 |
-| Last updated | 2026-10-12T20:32:03+02:00 |
+| Last updated | 2026-10-12T21:25:28+02:00 |
 | Branch | `feat/horizontal-workspace-tabs` |
 | Based on | `v1.4.224` |
 | Origin | Our own idea; no upstream issue or pull request found (searched 2026-10-11) |
@@ -45,14 +45,14 @@ Each was chosen by the user during the design session on 2026-10-11.
 
 - One tab per workspace (not per agent, not per project).
 - Label: the workspace name, shortened with an ellipsis. The project is
-  named once ahead of its group of tabs (see "Order of the tabs").
+  named once, as a caption on its group (see "Order of the tabs").
+- Every tab is a visible pill: inactive ones faint, the active one
+  stronger and in medium weight.
 - The same status dot as the sidebar card, from the same source.
 - A small agent count next to the name when the workspace has agents.
 - Hovering a tab opens a details card: workspace, project and branch, the
   status in words, how many agents and terminals it has, and the sidebar's
   own agent list for that workspace.
-- The active workspace's tab is highlighted like the active tab in the
-  existing tab row.
 
 ### Which workspaces have tabs
 
@@ -108,10 +108,12 @@ order they were opened, workspaces of one project ended up scattered.
 
 - Setting "Workspace Tab Order", shown under the strip's toggle while the
   strip is on, with two choices:
-  - **By project** (default): tabs of one project sit together, the
-    project name is shown once ahead of them, and a divider separates
-    projects. Projects follow the order they were added to Orca; tabs
-    inside a project keep the order they were opened.
+  - **By project** (default): the tabs of one project sit together
+    inside one outlined box, so the row reads as projects first and
+    workspaces second. A small, dim, upper-case caption names the
+    project; it is left out when one of the tabs already carries that
+    name. Projects follow the order they were added to Orca; tabs inside
+    a project keep the order they were opened.
   - **Order opened**: one flat row, each tab labelled `project / workspace`.
 - The saved list stays in open order either way; grouping is only how it
   is shown, so switching the setting loses nothing.
@@ -119,6 +121,10 @@ order they were opened, workspaces of one project ended up scattered.
   the order shown.
 - A name is never repeated: a workspace called the same as its project is
   labelled with the one name.
+- The first grouped version (in `v1.4.224-fork.3`) showed the project as
+  plain text the size of a tab, between shapeless tabs. In use it read as
+  an extra tab and gave no hierarchy, so it was replaced by the outlined
+  groups.
 
 ### Left out of the first version
 
@@ -270,7 +276,7 @@ and `assets/main.css`. Both folders are imported from, through
 | `workspace-strip-keybindings.test.ts` | The three shortcut actions exist and ship unassigned on every platform |
 | `WorkspaceStripTab.test.tsx` | A tab renders project, workspace name and status dot; the active tab is marked; no close button when it cannot close; nothing for an unknown workspace; no project inside a group; no repeated name; the agent count |
 | `WorkspaceStripTabDetails.test.tsx` | The hover card shows workspace, project, branch, status and the agent and terminal counts, and lists agents only when there are some |
-| `WorkspaceStrip.test.tsx` | Nothing while the setting is off; one tab per open workspace; the only tab cannot be closed; each project named once with a divider between projects; project left on the tabs when not grouped |
+| `WorkspaceStrip.test.tsx` | Nothing while the setting is off; one tab per open workspace; the only tab cannot be closed; each project in its own outlined group with one caption; no caption when a tab carries the project name; project left on the tabs when not grouped |
 | `tests/e2e/workspace-strip.spec.ts` | In the real app: off by default; appears as the top row above the existing tabs; a second workspace gets a tab; clicking switches; sidebar closed keeps tabs clear of the title bar controls and leaves no gap below; closing the active tab moves to its neighbor and keeps the workspace; the last tab has no close button; the project is named once and the order setting switches grouping off and on; hovering a tab shows its details card |
 
 Run them with:
@@ -284,7 +290,7 @@ Set `ORCA_WORKSPACE_STRIP_SCREENSHOT_DIR` to also save screenshots of the
 two tab rows. They are clipped to those rows on purpose, so a screenshot
 never contains terminal output.
 
-Passing on macOS as of the last update: the 59 unit tests, `pnpm tc`,
+Passing on macOS as of the last update: the 60 unit tests, `pnpm tc`,
 `pnpm run check:code-quality:changed`, the end-to-end test, and Orca's
 existing layout, settings, tab-group and shortcut tests (1803 tests; these
 were last run before the tab order and hover card were added).
@@ -297,6 +303,8 @@ Not yet checked:
 - The hover card's agent list and the agent count with real agents
   running; the test app has none, so only the empty case ran end to end.
 - The "Workspace Tab Order" control clicked in the running app.
+- The outlined groups with several projects and in the dark theme; the
+  test app has one project and runs in the light theme.
 - The strip together with Interface Glass, which lives on another branch.
 - The settings toggle clicked in the running app (the test enables the
   setting directly).

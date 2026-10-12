@@ -2,10 +2,11 @@ import { Fragment, useEffect, useRef } from 'react'
 import { Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import type { OpenWorkspaceTabs } from './open-workspace-tabs'
 import { useOpenWorkspaceTabs } from './use-open-workspace-tabs'
 import {
   openWorkspaceSwitchPalette,
-  useProjectName,
+  useProjectCaption,
   useRightSidebarOpen,
   useSidebarOpen,
   useWorkspaceStripEnabled
@@ -26,6 +27,18 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
   const rightSidebarOpen = useRightSidebarOpen()
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const canClose = visibleTabs.length > 1
+  const renderTab = (workspaceId: string, showProject: boolean): React.JSX.Element => (
+    <WorkspaceStripTab
+      key={workspaceId}
+      workspaceId={workspaceId}
+      isActive={workspaceId === activeWorkspaceId}
+      canClose={canClose}
+      showProject={showProject}
+      onActivate={activateTab}
+      onClose={closeTab}
+      onCloseOthers={closeOtherTabs}
+    />
+  )
   const addLabel = translate('auto.components.workspaceStrip.switchWorkspace', 'Switch workspace')
 
   useEffect(() => {
@@ -50,28 +63,21 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
       )}
       <div
         ref={scrollerRef}
-        className="scrollbar-none flex h-full min-w-0 items-center gap-1 overflow-x-auto px-1"
+        className="scrollbar-none flex h-full min-w-0 items-center gap-1.5 overflow-x-auto px-1.5"
       >
-        {tabGroups.map((group, index) => (
-          <Fragment key={group.projectId ?? 'no-project'}>
-            {index > 0 ? (
-              <div data-workspace-strip-divider="" className="mx-1 h-4 w-px shrink-0 bg-border" />
-            ) : null}
-            <WorkspaceStripGroupLabel projectId={group.projectId} />
-            {group.tabs.map((workspaceId) => (
-              <WorkspaceStripTab
-                key={workspaceId}
-                workspaceId={workspaceId}
-                isActive={workspaceId === activeWorkspaceId}
-                canClose={canClose}
-                showProject={group.projectId === null}
-                onActivate={activateTab}
-                onClose={closeTab}
-                onCloseOthers={closeOtherTabs}
-              />
-            ))}
-          </Fragment>
-        ))}
+        {tabGroups.map((group) =>
+          group.projectId === null ? (
+            <Fragment key="no-project">{group.tabs.map((id) => renderTab(id, true))}</Fragment>
+          ) : (
+            <WorkspaceStripGroup
+              key={group.projectId}
+              projectId={group.projectId}
+              tabs={group.tabs}
+            >
+              {group.tabs.map((id) => renderTab(id, false))}
+            </WorkspaceStripGroup>
+          )
+        )}
       </div>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -101,19 +107,30 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
   )
 }
 
-/** Names a project once, ahead of its tabs; hidden from assistive tech because each tab already carries it. */
-function WorkspaceStripGroupLabel(props: { projectId: string | null }): React.JSX.Element | null {
-  const name = useProjectName(props.projectId)
-  if (!name) {
-    return null
-  }
+/** One project's tabs inside a shared outline, so the row reads as projects first and workspaces second. */
+function WorkspaceStripGroup(props: {
+  projectId: string
+  tabs: OpenWorkspaceTabs
+  children: React.ReactNode
+}): React.JSX.Element {
+  const caption = useProjectCaption(props.projectId, props.tabs)
   return (
-    <span
-      aria-hidden="true"
-      data-workspace-strip-group={props.projectId ?? ''}
-      className="max-w-40 shrink-[4] truncate pl-1 text-xs font-medium text-muted-foreground"
+    <div
+      role="presentation"
+      data-workspace-strip-group={props.projectId}
+      className="flex h-7 min-w-0 shrink items-center gap-0.5 rounded-lg border border-border bg-foreground/[0.03] px-0.5"
     >
-      {name}
-    </span>
+      {/* Why hidden from assistive tech: each tab's own name already includes the project. */}
+      {caption ? (
+        <span
+          aria-hidden="true"
+          data-workspace-strip-caption=""
+          className="max-w-32 shrink-[4] truncate px-1.5 text-[10px] font-medium tracking-wider text-muted-foreground/70 uppercase"
+        >
+          {caption}
+        </span>
+      ) : null}
+      {props.children}
+    </div>
   )
 }

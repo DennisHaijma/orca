@@ -14,7 +14,6 @@ import {
   useWorkspaceAgentCount,
   useWorkspaceStatus,
   useWorkspaceTabLabel,
-  workspaceTabStateClasses,
   WorkspaceStatusDot
 } from './workspace-strip-orca-bindings'
 
@@ -53,8 +52,11 @@ export function WorkspaceStripTab(props: {
               aria-label={text}
               data-workspace-strip-tab={workspaceId}
               className={cn(
-                'group/strip-tab flex h-7 min-w-16 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-md px-2 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                workspaceTabStateClasses(isActive)
+                'group/strip-tab flex h-6 min-w-16 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-md px-2 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                // Why not the tab row's classes: they paint inactive tabs in the row's own colour, leaving them shapeless here.
+                isActive
+                  ? 'bg-foreground/15 font-medium text-foreground'
+                  : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground'
               )}
               onClick={() => onActivate(workspaceId)}
               onMouseDown={preventMiddleButtonDefault}

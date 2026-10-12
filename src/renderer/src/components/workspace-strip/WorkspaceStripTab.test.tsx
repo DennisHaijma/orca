@@ -19,7 +19,6 @@ vi.mock('./workspace-strip-orca-bindings', () => ({
   useWorkspaceStatus: () => bindings.status,
   useWorkspaceAgentCount: () => bindings.agentCount,
   workspaceStatusLabel: (status: string) => `status:${status}`,
-  workspaceTabStateClasses: (isActive: boolean) => (isActive ? 'is-active' : 'is-inactive'),
   WorkspaceStatusDot: ({ status }: { status: string }) => <span data-status-dot={status} />
 }))
 
@@ -55,13 +54,13 @@ describe('WorkspaceStripTab', () => {
     expect(html).toMatch(/data-workspace-strip-name=""[^>]*>glass</)
     expect(html).toContain('data-status-dot="working"')
     expect(html).toContain('aria-selected="false"')
-    expect(html).toContain('is-inactive')
+    expect(html).toContain('text-muted-foreground')
   })
 
   it('marks the active tab', () => {
     const html = render({ isActive: true })
     expect(html).toContain('aria-selected="true"')
-    expect(html).toContain('is-active')
+    expect(html).toContain('font-medium text-foreground')
   })
 
   it('shows only the workspace name when the project is unknown', () => {

@@ -20,7 +20,8 @@ vi.mock('./workspace-strip-orca-bindings', () => ({
   useWorkspaceStripEnabled: () => state.enabled,
   useSidebarOpen: () => true,
   useRightSidebarOpen: () => true,
-  useProjectName: (projectId: string | null) => (projectId ? `name:${projectId}` : null),
+  useProjectCaption: (projectId: string | null) =>
+    projectId === 'named-by-tab' ? null : `name:${projectId}`,
   openWorkspaceSwitchPalette: () => {}
 }))
 
@@ -84,7 +85,7 @@ describe('WorkspaceStrip', () => {
     expect(render()).toContain('data-tab="a" data-active="true" data-can-close="false"')
   })
 
-  it('names each project once, ahead of its tabs, with a divider between projects', () => {
+  it('puts each project in its own outlined group, captioned once, with its tabs inside', () => {
     state.visibleTabs = ['a', 'b', 'c']
     state.tabGroups = [
       { projectId: 'p1', tabs: ['a', 'b'] },
@@ -93,10 +94,20 @@ describe('WorkspaceStrip', () => {
     state.activeWorkspaceId = 'a'
     const html = render()
     expect(html.match(/data-workspace-strip-group=/g)).toHaveLength(2)
-    expect(html.match(/data-workspace-strip-divider=/g)).toHaveLength(1)
+    expect(html.match(/data-workspace-strip-caption=/g)).toHaveLength(2)
     expect(html.indexOf('name:p1')).toBeLessThan(html.indexOf('data-tab="a"'))
     expect(html.indexOf('data-tab="b"')).toBeLessThan(html.indexOf('name:p2'))
     expect(html).toContain('data-show-project="false" data-tab="c"')
+    state.tabGroups = null
+  })
+
+  it('leaves the caption out when a tab already carries the project name', () => {
+    state.visibleTabs = ['a']
+    state.tabGroups = [{ projectId: 'named-by-tab', tabs: ['a'] }]
+    state.activeWorkspaceId = 'a'
+    const html = render()
+    expect(html).toContain('data-workspace-strip-group="named-by-tab"')
+    expect(html).not.toContain('data-workspace-strip-caption')
     state.tabGroups = null
   })
 
