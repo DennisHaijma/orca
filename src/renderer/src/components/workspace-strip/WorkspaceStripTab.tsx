@@ -52,7 +52,7 @@ export function WorkspaceStripTab(props: {
               aria-label={text}
               data-workspace-strip-tab={workspaceId}
               className={cn(
-                'group/strip-tab flex h-6 min-w-16 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-lg border px-2 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                'group/strip-tab flex h-7 min-w-16 max-w-56 shrink cursor-pointer [-webkit-app-region:no-drag] items-center gap-1.5 rounded-sm border px-2 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring',
                 // Why the sidebar's own tokens and hover class: a tab is the same workspace as a sidebar card and should look like one.
                 isActive
                   ? 'border-[color-mix(in_srgb,var(--worktree-sidebar-border)_40%,transparent)] bg-[color-mix(in_srgb,var(--worktree-sidebar-foreground)_8%,transparent)] dark:border-[color-mix(in_srgb,var(--worktree-sidebar-foreground)_18%,var(--worktree-sidebar-border))] dark:bg-[color-mix(in_srgb,var(--worktree-sidebar-foreground)_10%,transparent)]'

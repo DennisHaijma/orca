@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Written | 2026-10-11T22:41:00+02:00 |
-| Last updated | 2026-10-12T22:51:49+02:00 |
+| Last updated | 2026-10-12T23:18:48+02:00 |
 | Branch | `feat/horizontal-workspace-tabs` |
 | Based on | `v1.4.224` |
 | Origin | Our own idea; no upstream issue or pull request found (searched 2026-10-11) |
@@ -47,7 +47,8 @@ Each was chosen by the user during the design session on 2026-10-11.
 - Label: the workspace name, shortened with an ellipsis. The project is
   named once, as a caption on its group (see "Order of the tabs").
 - A tab looks like the sidebar's workspace card: no fill until hovered,
-  and the active one gets the sidebar's selected-card border and fill.
+  and the active one gets the sidebar's selected-card border and fill,
+  with small corners so it reads as a card and not as a pill.
   It uses the sidebar's own colour tokens and hover class, so a theme
   change reaches both.
 - The same status dot as the sidebar card, from the same source.
@@ -80,6 +81,9 @@ Each was chosen by the user during the design session on 2026-10-11.
   the active tab in view.
 
 ### The + button
+
+While project headings are shown, the button sits on the tab line after
+the last tab, not centred between the heading line and the tab line.
 
 - Opens Orca's existing "Switch worktree" palette.
 

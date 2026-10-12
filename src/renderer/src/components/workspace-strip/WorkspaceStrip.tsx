@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { Folder, Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
+import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useOpenWorkspaceTabs } from './use-open-workspace-tabs'
 import {
@@ -83,7 +84,8 @@ function EnabledWorkspaceStrip(): React.JSX.Element {
           <button
             type="button"
             data-workspace-strip-add=""
-            className="titlebar-icon-button ml-1"
+            // Why the top margin: beside project headings the button belongs on the tab line, not between the two lines.
+            className={cn('titlebar-icon-button ml-1', grouped && 'mt-[18px]')}
             aria-label={addLabel}
             onClick={openWorkspaceSwitchPalette}
           >
